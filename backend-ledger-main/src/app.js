@@ -1,9 +1,15 @@
 const express = require("express")
 const cookieParser = require("cookie-parser")
+const { createCorsMiddleware } = require("./config/cors")
 
 
 
 const app = express()
+const corsMiddleware = createCorsMiddleware()
+
+// Configure CORS before API routes and explicitly handle OPTIONS preflight for /api routes
+app.use(corsMiddleware)
+app.options(/^\/api(?:\/.*)?$/, corsMiddleware)
 
 
 app.use(express.json())

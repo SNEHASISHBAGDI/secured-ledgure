@@ -27,8 +27,9 @@ A full-stack double-entry demonstration ledger application built with **Express 
 
 ### 1. Environment Variables
 See [`backend-ledger-main/.env.example`](backend-ledger-main/.env.example) for required variables in `backend-ledger-main/.env`.
+- `FRONTEND_ORIGIN`: Exact allowed CORS frontend origin (set to `https://secured-ledgure-frontend.onrender.com` in production; local Vite development on `http://localhost:5173` / `http://127.0.0.1:5173` is allowed automatically when `NODE_ENV !== "production"`).
 - Note: MongoDB must run as a **Replica Set** (such as MongoDB Atlas) for multi-document ACID transactions.
-- `SYSTEM_ADMIN_KEY` is optional; leave unset unless intentionally using the administrative initial-funds endpoint.
+- `SYSTEM_ADMIN_KEY` is optional; the administrative initial-funds endpoint remains disabled (`501`) until an auditable treasury design is implemented.
 
 ### 2. Install Dependencies
 ```powershell

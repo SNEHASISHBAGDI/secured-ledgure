@@ -42,28 +42,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(false);
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<void> => {
-    const data = await loginApi(credentials);
-    setUser(data.user);
-    setToken(data.token);
-    tokenStorage.set(data.token);
+  const persistSession = (nextUser: User, nextToken: unknown) => {
+    const validToken =
+      typeof nextToken === 'string' &&
+      nextToken.trim().length > 0 &&
+      nextToken.trim() !== 'undefined' &&
+      nextToken.trim() !== 'null'
+        ? nextToken.trim()
+        : null;
+
+    setUser(nextUser);
+    setToken(validToken);
+
+    if (validToken) {
+      tokenStorage.set(validToken);
+    } else {
+      tokenStorage.remove();
+    }
+
     try {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
     } catch {
       // Storage unavailable
     }
   };
 
+  const login = async (credentials: LoginCredentials): Promise<void> => {
+    const data = await loginApi(credentials);
+    persistSession(data.user, data.token);
+  };
+
   const register = async (credentials: RegisterCredentials): Promise<void> => {
     const data = await registerApi(credentials);
-    setUser(data.user);
-    setToken(data.token);
-    tokenStorage.set(data.token);
-    try {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
-    } catch {
-      // Storage unavailable
-    }
+    persistSession(data.user, data.token);
   };
 
   const logout = async (): Promise<void> => {

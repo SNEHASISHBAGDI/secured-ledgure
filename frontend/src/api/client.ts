@@ -1,20 +1,37 @@
 import { ApiError, ApiErrorResponse } from '../types/api';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
 const TOKEN_KEY = 'secure_ledger_token';
+
+function isValidTokenString(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  return trimmed.length > 0 && trimmed !== 'undefined' && trimmed !== 'null';
+}
 
 export const tokenStorage = {
   get: (): string | null => {
     try {
-      return localStorage.getItem(TOKEN_KEY);
+      const raw = localStorage.getItem(TOKEN_KEY);
+      if (!isValidTokenString(raw)) {
+        if (raw !== null) {
+          localStorage.removeItem(TOKEN_KEY);
+        }
+        return null;
+      }
+      return raw.trim();
     } catch {
       return null;
     }
   },
   set: (token: string): void => {
     try {
-      localStorage.setItem(TOKEN_KEY, token);
+      if (isValidTokenString(token)) {
+        localStorage.setItem(TOKEN_KEY, token.trim());
+      } else {
+        localStorage.removeItem(TOKEN_KEY);
+      }
     } catch {
       // Storage unavailable or blocked
     }
@@ -41,8 +58,13 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
   };
 
   const token = tokenStorage.get();
-  if (token) {
+  if (isValidTokenString(token)) {
     headers['Authorization'] = `Bearer ${token}`;
+  } else if (
+    typeof headers['Authorization'] === 'string' &&
+    /^Bearer\s+(undefined|null)?$/i.test(headers['Authorization'].trim())
+  ) {
+    delete headers['Authorization'];
   }
 
   const config: RequestInit = {
